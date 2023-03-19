@@ -1,0 +1,26 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Custom CFN CrossAccount DNS Provider
+Parameters:
+  HostedZoneAccountId:
+    Type: String
+
+  HostedZoneId:
+    Type: String
+
+  DomainName:
+    Type: String
+
+  DomainValue:
+    Type: String
+
+Resources:
+
+  CrossAccountDNS:
+    Type: Custom::CrossAccountDNS
+    Properties:
+      ServiceToken: !Sub arn:aws:sns:${AWS::Region}:${HostedZoneAccountId}:binxio-cfn-cross-account-dns-provider
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: CNAME
+      Value: !Ref DomainValue

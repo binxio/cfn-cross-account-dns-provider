@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+cfn_cross_account_dns_provider = {editable = true, path = "."}
+
+[requires]
+python_version = "3.9"
+
+[dev-packages]
+tox = "*"
+build = "*"
+pytest = "*"
+pytest-cov = "*"
+git-release-tag = "*"
+botocore-stubber-recorder = "*"

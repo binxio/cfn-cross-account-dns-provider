@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Manage DNS records in a Route53 Hosted Zone in another AWS Account, using a SNS backed custom CloudFormation resource.
+Parameters:
+  S3BucketPrefix:
+    Type: String
+    Default: 'binxio-public'
+
+  OrganizationId:
+    Type: String
+    Default: ''
+
+Conditions:
+  UseOrganizationId: !Not [!Equals [!Ref OrganizationId, ""]]
+
+Resources:
+
+  CFNCustomTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: binxio-cfn-cross-account-dns-provider
+      Subscription:
+        - Endpoint: !GetAtt CFNCustomProvider.Arn
+          Protocol: lambda
+
+  CFNCustomTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref CFNCustomTopic
+      PolicyDocument:
+        Fn::ToJsonString:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Resource: !GetAtt CFNCustomTopic.TopicArn
+              Action: sns:Publish
+              Principal:
+                AWS: "*"
+              Condition:
+                StringEquals:
+                  # You could also limit this on AWS Account ID using the aws:PrincipalAccount key.
+                  aws:PrincipalOrgID: !If [UseOrganizationId, !Ref OrganizationId, !Ref 'AWS::NoValue']
+
+  CFNCustomTopicPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt CFNCustomProvider.Arn
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !GetAtt CFNCustomTopic.TopicArn
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        - PolicyName: CloudWatchLogs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/binxio-cfn-cross-account-dns-provider:*
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+        - PolicyName: ManageRoute53
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Resource: "*"
+                Action: route53:ListHostedZonesByName
+              - Effect: Allow
+                Resource:
+                  # If you want to limit the host zones you can specify the ids here!
+                  - arn:aws:route53:::hostedzone/*
+                Action:
+                  - route53:ChangeResourceRecordSets
+
+  CFNCustomProviderLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${CFNCustomProvider}
+      RetentionInDays: 7
+
+  CFNCustomProvider:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Manage DNS records in a Route53 Hosted Zone in another AWS Account, using a SNS backed custom CloudFormation resource.
+      Code:
+        S3Bucket: !Sub ${S3BucketPrefix}-${AWS::Region}
+        S3Key: lambdas/cfn-cross-account-dns-provider-0.0.0.zip
+      FunctionName: binxio-cfn-cross-account-dns-provider
+      Handler: cfn_cross_account_dns_provider.handler
+      MemorySize: 128
+      Role: !GetAtt LambdaRole.Arn
+      Runtime: python3.9
+      Timeout: 900

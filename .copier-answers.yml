@@ -1,0 +1,18 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 0.1.0
+_src_path: https://github.com/binxio/cloudformation-custom-provider-template
+author: Joris Conijn
+author_email: joris.conijn@xebia.com
+aws_profile: integration-test
+aws_region: eu-central-1
+description: Manage DNS records in a Route53 Hosted Zone in another AWS Account, using
+    a SNS backed custom CloudFormation resource.
+module_name: cfn_cross_account_dns_provider
+project_name: cfn-cross-account-dns-provider
+python_version: '3.9'
+resource_file_name: cross_account_dns
+resource_name: CrossAccountDNS
+resource_type_name: Custom::CrossAccountDNS
+s3_bucket_prefix: binxio-public
+s3_object_acl: public-read
+url: https://github.com/binxio/cfn-cross-account-dns-provider
