@@ -97,7 +97,7 @@ Resources:
       Description: Manage DNS records in a Route53 Hosted Zone in another AWS Account, using a SNS backed custom CloudFormation resource.
       Code:
         S3Bucket: !Sub ${S3BucketPrefix}-${AWS::Region}
-        S3Key: lambdas/cfn-cross-account-dns-provider-0.0.0.zip
+        S3Key: lambdas/cfn-cross-account-dns-provider-0.1.0.zip
       FunctionName: binxio-cfn-cross-account-dns-provider
       Handler: cfn_cross_account_dns_provider.handler
       MemorySize: 128
