@@ -1,10 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::LanguageExtensions
 Description: Manage DNS records in a Route53 Hosted Zone in another AWS Account, using a SNS backed custom CloudFormation resource.
 Parameters:
-  S3BucketPrefix:
-    Type: String
-    Default: 'binxio-public'
-
   OrganizationId:
     Type: String
     Default: ''
@@ -95,12 +92,10 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Description: Manage DNS records in a Route53 Hosted Zone in another AWS Account, using a SNS backed custom CloudFormation resource.
+      PackageType: Image
       Code:
-        S3Bucket: !Sub ${S3BucketPrefix}-${AWS::Region}
-        S3Key: lambdas/cfn-cross-account-dns-provider-0.1.0.zip
+        ImageUri: 463637877380.dkr.ecr.eu-central-1.amazonaws.com/xebia/cfn-cross-account-dns-provider:0.1.0-3c8f9db-dirty
       FunctionName: binxio-cfn-cross-account-dns-provider
-      Handler: cfn_cross_account_dns_provider.handler
       MemorySize: 128
       Role: !GetAtt LambdaRole.Arn
-      Runtime: python3.9
       Timeout: 900
